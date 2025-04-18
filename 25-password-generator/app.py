@@ -93,4 +93,10 @@ def main():
     print(f"Average words per sentence:")
     print(f"Average characters per word:")
 
+    if get_yes_no_input("\n Would you like to create another"):
+        main()
+    else:
+        print(" Thank you ")    
+
+
 main()    
