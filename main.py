@@ -17,7 +17,7 @@ STATUS_CODES = {
 MEMORY = {}
 
 class Request:
-    def __init__(self, method, path, version, headers = {}, body = ""):
+    def __init__(self, method, path, version, headers={}, body=""):
         self.method = method
         self.path = path
         self.version = version
@@ -25,85 +25,89 @@ class Request:
         self.body = body
 
     def __str__(self):
-        return f"Reuest({self.method} {self.path} {self.version})"
+        return f"Request({self.method} {self.path} {self.version})"
 
 
-def parse_request_line(req: str) -> Request:
-    parts = req.split("\\r\\n\\r\\n")
-    request_headers_line = parts[0]
-    body = ""
-    if len(parts) > 1:
-        body = parts[1]
-        json.loads()
-        print(type(body))
-
-    request_line, headers = parse_request_line(request_headers_line)
-    method, path, version = request_line
-    return Request(method, path, version, headers, body)
-
-
-def parse_request_line(req: str) -> tuple[list, dict]:
-    parts = req.split("\\r\\n")
-    request_line = parts[0].split(" ")
-    header_lines = parse_headers (parts[1:])
-    return request_line, header_lines
-    
-
-    
-
-
-def parse_headers(headers: list[str]) -> dict:   
+def parse_headers(headers: List[str]) -> dict:
     parsed_headers = {}
     for header in headers:
         if ": " in header:
-            key, value = header.split(": ")
-            parsed_headers [key] = value
+            key, value = header.split(": ", 1)
+            parsed_headers[key] = value
     return parsed_headers
 
 
-def generate_response(request: Request, code: int, message: str, body: str) -> str:
-    resp = [f"HTTP/1.0 {code} {message}\\r\\n"]
-    length = len(body)
-    for key, value in request.headers.items():
-        resp.append(f"{key}: {value}\\r\\n")
+def parse_request(raw_request: str) -> Request:
+    try:
+        parts = raw_request.split("\r\n\r\n", 1)
+        header_section = parts[0]
+        body = parts[1] if len(parts) > 1 else ""
 
-    resp.append(f"Content-Type: text/html\r\n")
-    resp.append(f"Content-Length: {length}\r\n\r\n")
+        header_lines = header_section.split("\r\n")
+        request_line = header_lines[0].split(" ")
+        method, path, version = request_line
+
+        headers = parse_headers(header_lines[1:])
+
+        return Request(method, path, version, headers, body)
+    except Exception as e:
+        print(f"Failed to parse request: {e}")
+        return Request("GET", "/", "HTTP/1.0", {}, "")  # fallback
+
+
+def generate_response(request: Request, code: int, message: str, body: str) -> str:
+    resp = [f"HTTP/1.0 {code} {message}\r\n"]
+    resp.append("Content-Type: text/html\r\n")
+    resp.append(f"Content-Length: {len(body.encode())}\r\n\r\n")
     resp.append(body)
     return "".join(resp)
 
-        
+
 def main() -> None:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        print("Listening on port http://127.0.1:8000")
+        print("Listening on port http://127.0.0.1:8000")
         sock.bind((HOST, PORT))
         sock.listen(1)
-        conn, addr = sock.accept()
-        with conn:
-            print(f"Connected established with this IP:", addr)
-        
-            while True:
-               data = conn.recv(1024)
-               request = parse_request_line(data.decode())
-               response = ""
-               if request.mehod == "GET":
-                   if request.path in MEMORY:
-                       response = generate_response(request, 200, STATUS_CODES[200], "<h1>Hello, World!</h1>")
-                   else:
-                       response = generate_response(request, 404, STATUS_CODES[404], "<h1>Data not found</h1>")
-               elif request.method == "POST":
-                   if request.path in MEMORY:
-                       resp = generate_response(request, 200, STATUS_CODES[200], MEMORY[request.path])
-                   else:
-                       body = json.dumps(request.body, indent=2)
-                       body[request.path] = body
-                       resp = generate_response(request, 201, STATUS_CODES[201], request.body.encode())                     
-               else:
+
+        while True:
+            conn, addr = sock.accept()
+            with conn:
+                print(f"Connection established with {addr}")
+                data = conn.recv(1024)
+                if not data:
+                    break
+
+                request = parse_request(data.decode())
+                print(request)
+
+                response = ""
+
+                if request.method == "GET":
+                    if request.path in MEMORY:
+                        response = generate_response(request, 200, STATUS_CODES[200], MEMORY[request.path])
+                    else:
+                        response = generate_response(request, 404, STATUS_CODES[404], "<h1>Data not found</h1>")
+
+                elif request.method == "POST":
+                    try:
+                        parsed_body = json.loads(request.body)
+                        MEMORY[request.path] = json.dumps(parsed_body, indent=2)
+                        response = generate_response(request, 201, STATUS_CODES[201], "<h1>Data created</h1>")
+                    except json.JSONDecodeError:
+                        response = generate_response(request, 400, STATUS_CODES[400], "<h1>Invalid JSON</h1>")
+
+                elif request.method == "DELETE":
                     if request.path in MEMORY:
                         del MEMORY[request.path]
-                        resp = generate_response(request, 200, STATUS_CODES[200], "<h1>Information deleted</h1>")                   
-               conn.sendall(response.encode())
-               
+                        response = generate_response(request, 200, STATUS_CODES[200], "<h1>Data deleted</h1>")
+                    else:
+                        response = generate_response(request, 404, STATUS_CODES[404], "<h1>Data not found</h1>")
+
+                else:
+                    response = generate_response(request, 400, STATUS_CODES[400], "<h1>Unsupported Method</h1>")
+
+                conn.sendall(response.encode())
+
+
 if __name__ == "__main__":
     main()
-
