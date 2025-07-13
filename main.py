@@ -20,13 +20,15 @@ class Request:
         self.body = body
 
     def __str__(self):
-        return f"Reuest({self.method} {self.path} HTTP/{self.version})"
+        return f"Reuest({self.method} {self.path} {self.version})"
 
 
 def parse_request_line(req: str) -> Request:
     parts = req.split("\\r\\n\\r\\n")
     request_headers_line = parts[0]
-    body = parts[1]
+    body = ""
+    if len(parts) > 1:
+        body = parts[1]
 
     request_line, headers = parse_request_line(request_headers_line)
     method, path, version = request_line
@@ -57,6 +59,8 @@ def generate_response(request: Request, body: str) -> str:
     length = len(body)
     for key, value in request.headers.items():
         resp.append(f"{key}: {value}\\r\\n")
+
+    resp.append(f"Content-Type: text/html\r\n")
     resp.append(f"Content-Length: {length}\r\n\r\n")
     resp.append(body)
     return "".join(resp)
@@ -74,12 +78,9 @@ def main() -> None:
             while True:
                data = conn.recv(1024)
                request = parse_request_line(data.decode())
+               response = generate_response(request, "<h1>Hello, World!</h1>")
+               conn.sendall(response.encode())
                
-               
-            #    print("Client:", data)
-            #    conn.sendall(f"Echo: {data}".encode())
-
-
 if __name__ == "__main__":
     main()
 
