@@ -64,7 +64,11 @@ def main() -> None:
             while True:
                data = conn.recv(1024)
                request = parse_request_line(data.decode())
-               request.method
+               print(request.method)
+               print(request.version)
+               print(request.path)
+               print(request.headers)
+               print()
                
             #    print("Client:", data)
             #    conn.sendall(f"Echo: {data}".encode())
