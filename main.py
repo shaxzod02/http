@@ -1,4 +1,5 @@
 import socket
+import json
 
 HOST = ""
 PORT = 8000
@@ -10,6 +11,8 @@ STATUS_CODES = {
     404: "Not Found",
     504: "Service Error",
 }
+
+MEMORY = {}
 
 class Request:
     def __init__(self, method, path, version, headers = {}, body = ""):
@@ -54,8 +57,8 @@ def parse_headers(headers: list[str]) -> dict:
     return parsed_headers
 
 
-def generate_response(request: Request, body: str) -> str:
-    resp = "HTTP/1.0 200 OK\\r\\n"
+def generate_response(request: Request, code: int, message: str, body: str) -> str:
+    resp = [f"HTTP/1.0 {code} {message}\\r\\n"]
     length = len(body)
     for key, value in request.headers.items():
         resp.append(f"{key}: {value}\\r\\n")
@@ -78,7 +81,23 @@ def main() -> None:
             while True:
                data = conn.recv(1024)
                request = parse_request_line(data.decode())
-               response = generate_response(request, "<h1>Hello, World!</h1>")
+               response = ""
+               if request.mehod == "GET":
+                   if request.path in MEMORY:
+                       response = generate_response(request, 200, STATUS_CODES[200], "<h1>Hello, World!</h1>")
+                   else:
+                       response = generate_response(request, 404, STATUS_CODES[404], "<h1>Data not found</h1>")
+               elif request.method == "POST":
+                   if request.path in MEMORY:
+                       resp = generate_response(request, 200, STATUS_CODES[200], MEMORY[request.path])
+                   else:
+                       body = json.loads(request.body)
+                       body[request.part] = body
+                       resp = generate_response(request, 201, STATUS_CODES[201], json.dump(body[request.path]) )                     
+               else:
+                    if request.path in MEMORY:
+                        del MEMORY[request.path]
+                        resp = generate_response(request, 200, STATUS_CODES[200], "<h1>Information deleted</h1>")                   
                conn.sendall(response.encode())
                
 if __name__ == "__main__":
