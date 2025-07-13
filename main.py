@@ -1,5 +1,7 @@
 import socket
 import json
+from typing import List
+
 
 HOST = ""
 PORT = 8000
@@ -32,6 +34,8 @@ def parse_request_line(req: str) -> Request:
     body = ""
     if len(parts) > 1:
         body = parts[1]
+        json.loads()
+        print(type(body))
 
     request_line, headers = parse_request_line(request_headers_line)
     method, path, version = request_line
@@ -91,9 +95,9 @@ def main() -> None:
                    if request.path in MEMORY:
                        resp = generate_response(request, 200, STATUS_CODES[200], MEMORY[request.path])
                    else:
-                       body = json.loads(request.body)
-                       body[request.part] = body
-                       resp = generate_response(request, 201, STATUS_CODES[201], json.dump(body[request.path]) )                     
+                       body = json.dumps(request.body, indent=2)
+                       body[request.path] = body
+                       resp = generate_response(request, 201, STATUS_CODES[201], request.body.encode())                     
                else:
                     if request.path in MEMORY:
                         del MEMORY[request.path]
