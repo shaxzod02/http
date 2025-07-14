@@ -1,11 +1,11 @@
-# 🖧 Python Mini HTTP Server
+##   Python Mini HTTP Server
 
 A simple multi-threaded HTTP server written in Python using only the standard library.  
 Supports basic in-memory storage and handles `GET`, `POST`, and `DELETE` requests.
 
 ---
 
-## 🚀 Getting Started
+### 🚀 Getting Started
 
 ### 1. Clone the repository (or copy the files)
 
@@ -19,7 +19,7 @@ python3 main.py
 ###
 Server will start on
 
-# 📡 API Usage
+## API Usage
 ### 🔸 POST /data — Store JSON data
 
 curl -X POST http://127.0.0.1:8000/data \
@@ -39,12 +39,12 @@ curl http://127.0.0.1:8000/data
 }
 ```
 
-## 🔸 DELETE /data — Delete stored data
+##  DELETE /data — Delete stored data
 curl -X DELETE http://127.0.0.1:8000/data
 ### Response:
 <h1>Data deleted</h1>
 
-## 🧠 How It Works
+##  How It Works
 The server uses socket and threading to handle multiple clients concurrently.
 
 Data is stored in a global Python dictionary called MEMORY.
