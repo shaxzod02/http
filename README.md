@@ -29,7 +29,7 @@ curl -X POST http://127.0.0.1:8000/data \
 ### Response:
 <h1>Data created</h1>
 
-# 🔸 GET /data — Retrieve data
+## 🔸 GET /data — Retrieve data
 curl http://127.0.0.1:8000/data
 ### Response:
 ```
