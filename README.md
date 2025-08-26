@@ -19,7 +19,7 @@ python3 main.py
 ###
 Server will start on
 
-## API Usage
+### API Usage
 ### 🔸 POST /data — Store JSON data
 
 curl -X POST http://127.0.0.1:8000/data \
@@ -29,7 +29,7 @@ curl -X POST http://127.0.0.1:8000/data \
 ### Response:
 <h1>Data created</h1>
 
-## 🔸 GET /data — Retrieve data
+### 🔸 GET /data — Retrieve data
 curl http://127.0.0.1:8000/data
 ### Response:
 ```
@@ -39,7 +39,7 @@ curl http://127.0.0.1:8000/data
 }
 ```
 
-##  DELETE /data — Delete stored data
+### DELETE /data — Delete stored data
 curl -X DELETE http://127.0.0.1:8000/data
 ### Response:
 <h1>Data deleted</h1>
